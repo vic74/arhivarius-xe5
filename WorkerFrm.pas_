@@ -1,0 +1,49 @@
+unit WorkerFrm;
+
+interface
+
+uses
+  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
+  Dialogs, AppUtils, BaseForm, cxGraphics, cxControls, cxLookAndFeels,
+  cxLookAndFeelPainters, dxSkinsCore, dxSkinOffice2010Blue, dxSkinscxPCPainter,
+  cxPropertiesStore, dxLayoutLookAndFeels, dxLayoutContainer, dxLayoutControl,
+  dxSkinOffice2013White, cxClasses;
+
+type
+  TWorkerForm = class(TDezForm)
+    grp1: TdxLayoutGroup;
+    lc1: TdxLayoutControl;
+    lf1: TdxLayoutLookAndFeelList;
+    lcf1: TdxLayoutCxLookAndFeel;
+    prop1: TcxPropertiesStore;
+    procedure FormCreate(Sender: TObject);
+    procedure FormClose(Sender: TObject; var Action: TCloseAction);
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+var
+  WorkerForm: TWorkerForm;
+
+implementation
+
+uses cmDBUnit;
+
+{$R *.dfm}
+
+
+procedure TWorkerForm.FormClose(Sender: TObject; var Action: TCloseAction);
+begin
+  Action:= caFree;
+end;
+
+procedure TWorkerForm.FormCreate(Sender: TObject);
+begin
+  LoadForm(prop1,Self.Name);
+end;
+
+initialization
+ RegisterClass(TWorkerForm);
+end.
