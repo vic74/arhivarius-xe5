@@ -1,0 +1,214 @@
+unit DogDopUnit;
+
+interface
+uses
+  Windows, Messages, SysUtils, BoundHelpers, Classes, Graphics, Controls, Forms,
+  SingletonTemplate, System.Variants,
+  DbDataHelpers, Data.DB;
+
+  type
+{ TDogDop }
+
+  TDogDop = class(TBoundObject)
+  private
+    fCode: Variant;
+    fDog: Variant;
+    fDopNum: Variant;
+    fDopDate: Variant;
+    fNote: Variant;
+    fOrderDoc: Variant;
+
+  protected
+    procedure SetCode(const AValue: Variant);
+    procedure SetDog(const AValue: Variant);
+    procedure SetDopNum(const AValue: Variant);
+    procedure SetDopDate(const AValue: Variant);
+    procedure SetNote(const AValue: Variant);
+    procedure SetOrderDoc(const AValue: Variant);
+  public
+    constructor Create;
+    destructor Destroy; override;
+    //
+    procedure CreateRec;
+    procedure UpdateRec(aCode: Variant);
+    procedure DeleteRec(aCode: Variant);
+    procedure LoadRec(aCode: Variant);
+    procedure LoadByDogCode(aCode: Variant);
+    procedure ShowEditForm(AOwner: TComponent; aDogCode: Variant; aDopDogCode: Variant);
+  published
+    property Code: Variant read fCode write SetCode;
+    property Dog: Variant read fDog write SetDog;
+    property DopNum: Variant read fDopNum write SetDopNum;
+    property DopDate: Variant read fDopDate write SetDopDate;
+    property Note: Variant read fNote write SetNote;
+    property OrderDoc: Variant read fOrderDoc write SetOrderDoc;
+  end;
+
+implementation
+
+{ TDogDop }
+
+uses DogDopEditFrm;
+
+constructor TDogDop.Create;
+begin
+  inherited;
+  DataManager.DogDopList.SetWriteOpt(True);
+end;
+
+procedure TDogDop.CreateRec;
+var
+  fSQL: string;
+begin
+  fSQL:= 'insert into DOGDOP (DOG, DOPNUM, DOPDATE, NOTE, ORDERDOC)'+#10#13+
+         'values (:DOG, :DOPNUM, :DOPDATE, :NOTE, :ORDERDOC)';
+  try
+    DataManager.ExecSQL(fSQL, [fDog, fDopNum, fDopDate, fNote, fOrderDoc]);
+    DataManager.DogDopList.Refresh;
+    DataManager.DogDopList.Last;
+  except
+    on e: Exception do
+      raise Exception.Create(e.Message);
+  end;
+end;
+
+procedure TDogDop.DeleteRec(aCode: Variant);
+var
+  fSQL: string;
+begin
+  if Application.MessageBox('¬ы действительно хотите удалить запись?',
+    '¬нимание!', MB_YESNO + MB_ICONWARNING + MB_DEFBUTTON2) = IDYES then
+  begin
+    if VarIsType(aCode,[varNull, varEmpty]) then
+      raise Exception.Create('Ќе выбрана запись.');
+    fSQL:= 'DELETE FROM DOGDOP WHERE (CODE = :CODE)';
+    DataManager.ExecSQL(fSQL,[aCode]);
+    DataManager.DogDopList.Refresh;
+  end;
+end;
+
+destructor TDogDop.Destroy;
+begin
+
+  inherited;
+end;
+
+procedure TDogDop.LoadByDogCode(aCode: Variant);
+begin
+  with DataManager.DogDopList do begin
+    Close;
+    MacroByName('Where').AsRaw:='Where d.DOG = :CODE';
+    ParamByName('CODE').Value:= aCode;
+    Open;
+  end;
+end;
+
+procedure TDogDop.LoadRec(aCode: Variant);
+var
+  fSQL: string;
+  Q: TDataSet;
+begin
+  fSQL:= 'SELECT * FROM DOGDOP WHERE CODE = :CODE';
+  try
+    Q:= DataManager.SelectData(fSQL,[aCode]);
+    while not Q.Eof do begin
+      fCode:= Q.FieldByName('CODE').AsVariant;
+      fDog:= Q.FieldByName('DOG').AsVariant;
+      fDopNum:= Q.FieldByName('DOPNUM').AsVariant;
+      fDopDate:= Q.FieldByName('DOPDATE').AsVariant;
+      fNote:= Q.FieldByName('NOTE').AsVariant;
+      fOrderDoc:= Q.FieldByName('ORDERDOC').AsVariant;
+      Q.Next;
+    end;
+  finally
+    FreeAndNil(Q);
+  end;
+end;
+
+procedure TDogDop.SetCode(const AValue: Variant);
+begin
+  if AValue <> fCode then
+  begin
+    fCode := AValue;
+    Notify('Code');
+  end;
+end;
+
+procedure TDogDop.SetDog(const AValue: Variant);
+begin
+  if AValue <> fDog then
+  begin
+    fDog := AValue;
+    Notify('Dog');
+  end;
+end;
+
+procedure TDogDop.SetDopDate(const AValue: Variant);
+begin
+  if AValue <> fDopDate then
+  begin
+    fDopDate := AValue;
+    Notify('DopDate');
+  end;
+end;
+
+procedure TDogDop.SetDopNum(const AValue: Variant);
+begin
+  if AValue <> fDopNum then
+  begin
+    fDopNum := AValue;
+    Notify('DopNum');
+  end;
+end;
+
+procedure TDogDop.SetNote(const AValue: Variant);
+begin
+  if AValue <> fNote then
+  begin
+    fNote := AValue;
+    Notify('Note');
+  end;
+end;
+
+procedure TDogDop.SetOrderDoc(const AValue: Variant);
+begin
+  if AValue <> fOrderDoc then
+  begin
+    fOrderDoc := AValue;
+    Notify('OrderDoc');
+  end;
+end;
+
+procedure TDogDop.ShowEditForm(AOwner: TComponent; aDogCode,
+  aDopDogCode: Variant);
+var
+  F: TDogDopEditForm;
+begin
+  F := TDogDopEditForm.Create(AOwner, aDopDogCode, aDogCode);
+  F.ShowModal;
+end;
+
+procedure TDogDop.UpdateRec(aCode: Variant);
+var
+  fSQL: string;
+begin
+  fSQL := 'update DOGDOP'+#10#13+
+          'set DOG = :DOG,'+#10#13+
+          '    DOPNUM = :DOPNUM,'+#10#13+
+          '    DOPDATE = :DOPDATE,'+#10#13+
+          '    NOTE = :NOTE,'+#10#13+
+          '    ORDERDOC = :ORDERDOC'+#10#13+
+          'where (CODE = :CODE)';
+   try
+     DataManager.ExecSQL(fSQL,
+     [fDog, fDopNum, fDopDate, fNote, fOrderDoc, aCode]);
+     DataManager.DogDopList.Refresh;
+     //устанавливаем курсор на редактируемую запись
+     DataManager.DogDopList.Locate('CODE',aCode,[]);
+   except
+     on e: Exception do
+       raise Exception.Create(e.Message);
+   end;
+end;
+
+end.
